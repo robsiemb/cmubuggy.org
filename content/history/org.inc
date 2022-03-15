@@ -63,9 +63,6 @@ while ($o = $otherTrophies->fetch_assoc()) {
 // Note that while design awards imply that there is a buggy being awarded, we do not always
 // have that association -- so there are a number of rows that have the org id in the designawards
 // table, but no buggyid.  We need to get both sets, and then merge them.
-//
-// TODO: this could return the buggy (when we know it) and notes, but we don't actually use these things in the display.
-//       it would certainly be a nice touch to do so (at least to link to the buggy page, for example)
 $designTrophiesQuery = "SELECT year, concat('98Design - ', award) AS award, buggyname, buggyid FROM (
                                SELECT b.orgid, year, award, b.name AS buggyname, b.buggyid
                                  FROM hist_designawards d
@@ -83,7 +80,7 @@ while ($d = $designTrophies->fetch_assoc()) {
   addtrophy($d["year"], $d["award"], $extra);
 }
 
-$buggyListQuery = "SELECT name, birthyear, note, buggyid AS urlKey FROM hist_buggies
+$buggyListQuery = "SELECT name, birthyear, note, buggyid AS urlKey, smugmug_slug FROM hist_buggies
                    WHERE orgid = ?
                    ORDER BY birthyear DESC;";
 $buggyList = dbBoundQuery($HISTORY_DATABASE, $buggyListQuery, "s", $orgUrlKey);
@@ -565,7 +562,37 @@ function graphtrends($entrytypes, $firstyear, $lastyear) {
     </div>
     <div class="tab-pane fade" id="tab-buggies" role="tabpanel" aria-labelledby="buggies-tab">
       <h2>Buggies</h2>
-      <div class="table-responsive">
+      <?php
+        // So, we render the buggy tab in 2 modes -- one for small screens using a text only table
+        // and one for large screens using a bootstrap grid layout with images.
+        //
+        // Note that if an org has thousands of buggies, this could be expensive... :)
+        $buggyData = $buggyList->fetch_all(MYSQLI_ASSOC);
+        echo("<div class=\"my-4 row d-none d-md-flex\">");
+        foreach ($buggyData as $b) {
+          echo("<div class=\"col col-md-4\">");
+          echo("<dl class=\"row\">");
+          if (!empty($b["smugmug_slug"])) {
+            echo("<div class=\"d-md-flex col-12 justify-content-center\">");
+            $slug = $b["smugmug_slug"];
+            $size = "S";
+            $image_url = "https://photos.smugmug.com/photos/".$slug."/0/".$size."/".$slug."-".$size.".jpg";
+            echo("<a href=\"/history/buggy/".$b["urlKey"]."\">");
+            echo("<img class=\"img-fluid\" src=\"".$image_url."\">");
+            echo("</a></div>");
+          }
+          echo("<dt class=\"col-sm-4\">Name</dt><dd class=\"col-sm-8\"><a href=\"/history/buggy/".$b["urlKey"]."\">" . $b["name"] . "</a></dd>");
+          echo("<dt class=\"col-sm-4\">Built</dt><dd class=\"col-sm-8\">".$b["birthyear"]."</dd>");
+          if (!empty($b["note"])) {
+            echo("<dt class=\"col-sm-4\">Note</dt>");
+            echo("<dd class=\"col-sm-8\">".$b["note"]."</dd>");
+          }
+          echo("</dl></div>");
+        }
+        echo("</div>");
+        // For breakpoints below MD, fall back to the table view with no images.
+      ?>
+      <div class="table-responsive d-flex d-md-none">
         <table class="table">
           <thead>
             <tr>
@@ -576,15 +603,17 @@ function graphtrends($entrytypes, $firstyear, $lastyear) {
           </thead>
           <tbody>
             <?php
-              while ($b = $buggyList->fetch_assoc()) {
-                echo("<tr><td>".$b["birthyear"]."</td>");
+              foreach($buggyData as $b) {
+                echo("<tr>");
+                echo("<td>".$b["birthyear"]."</td>");
                 echo("<td><a href=\"/history/buggy/".$b["urlKey"]."\">" . $b["name"] . "</a></td>");
-                echo("<td>".$b["note"]."</td></tr>");
+                echo("<td>".$b["note"]."</td>");
+                echo("</tr>");
               }
             ?>
           </tbody>
         </table>
-        </div>
+      </div>
     </div>
     <div class="tab-pane fade" id="tab-trophies" role="tabpanel" aria-labelledby="trophies-tab">
       <h2>Awards</h2>
