@@ -482,13 +482,13 @@ function graphtrends($entrytypes, $firstyear, $lastyear) {
 <?php if ($org["isracingorg"] == 1) { ?>
   <ul class="nav nav-tabs mb-2" role="tablist">
     <li class="nav-item">
-      <a id="raceresults-tab" href="#tab-raceresults" class="nav-link active" data-toggle="tab" role="tab" aria-controls="tab-raceresults" aria-selected="true">Race Results</a>
+      <a id="raceresults-tab" href="#tab-raceresults" class="nav-link" data-toggle="tab" role="tab" aria-controls="tab-raceresults" aria-selected="true">Race Results</a>
     </li>
     <li class="nav-item">
       <a id="records-tab" href="#tab-records" class="nav-link" data-toggle="tab" role="tab" aria-controls="tab-records" aria-selected="false">Records</a>
     </li>
     <li class="nav-item">
-      <a id="buggies-tab" href="#tab-buggies" class="nav-link" data-toggle="tab" role="tab" aria-controls="tab-buggies" aria-selected="false">Buggies <span class="badge badge-primary"><?php echo($buggyList->num_rows); ?></span></a>
+      <a id="buggies-tab" href="#tab-buggies" class="nav-link active" data-toggle="tab" role="tab" aria-controls="tab-buggies" aria-selected="false">Buggies <span class="badge badge-primary"><?php echo($buggyList->num_rows); ?></span></a>
     </li>
     <li class="nav-item">
       <a id="trophies-tab" href="#tab-trophies" class="nav-link" data-toggle="tab" role="tab" aria-controls="tab-trophies" aria-selected="false">Trophies <span class="badge badge-primary"><?php echo($trophyCount); ?></span></a>
@@ -501,7 +501,7 @@ function graphtrends($entrytypes, $firstyear, $lastyear) {
   </ul>
 
   <div class="tab-content">
-    <div class="tab-pane fade show active" id="tab-raceresults" role="tabpanel" aria-labelledby="raceresults-tab">
+    <div class="tab-pane fade" id="tab-raceresults" role="tabpanel" aria-labelledby="raceresults-tab">
       <h2>Race Results</h2>
       <div class="table-responsive">
         <table class="table">
@@ -560,7 +560,7 @@ function graphtrends($entrytypes, $firstyear, $lastyear) {
         </table>
       </div>
     </div>
-    <div class="tab-pane fade" id="tab-buggies" role="tabpanel" aria-labelledby="buggies-tab">
+    <div class="tab-pane fade show active" id="tab-buggies" role="tabpanel" aria-labelledby="buggies-tab">
       <h2>Buggies</h2>
       <?php
         // So, we render the buggy tab in 2 modes -- one for small screens using a text only table
@@ -572,11 +572,14 @@ function graphtrends($entrytypes, $firstyear, $lastyear) {
         foreach ($buggyData as $b) {
           echo("<div class=\"col col-md-4\">");
           echo("<dl class=\"row\">");
-          if (!empty($b["smugmug_slug"])) {
+          if (!empty($b["smugmug_slug"]) || !empty($org["image_url"])) {
             echo("<div class=\"d-md-flex col-12 justify-content-center\">");
-            $slug = $b["smugmug_slug"];
-            $size = "S";
-            $image_url = "https://photos.smugmug.com/photos/".$slug."/0/".$size."/".$slug."-".$size.".jpg";
+            $image_url = $org["image_url"];
+            if (!empty($b["smugmug_slug"])) {
+              $slug = $b["smugmug_slug"];
+              $size = "S";            
+              $image_url = "https://photos.smugmug.com/photos/".$slug."/0/".$size."/".$slug."-".$size.".jpg";
+            }
             echo("<a href=\"/history/buggy/".$b["urlKey"]."\">");
             echo("<img class=\"img-fluid\" src=\"".$image_url."\">");
             echo("</a></div>");
@@ -584,8 +587,9 @@ function graphtrends($entrytypes, $firstyear, $lastyear) {
           echo("<dt class=\"col-sm-4\">Name</dt><dd class=\"col-sm-8\"><a href=\"/history/buggy/".$b["urlKey"]."\">" . $b["name"] . "</a></dd>");
           echo("<dt class=\"col-sm-4\">Built</dt><dd class=\"col-sm-8\">".$b["birthyear"]."</dd>");
           if (!empty($b["note"])) {
-            echo("<dt class=\"col-sm-4\">Note</dt>");
-            echo("<dd class=\"col-sm-8\">".$b["note"]."</dd>");
+            //echo("<dt class=\"col-sm-4\">Note</dt>");
+            //echo("<dd class=\"col-sm-8\">".$b["note"]."</dd>");
+            echo("<em class=\"col-sm-12\">".$b["note"]."</em>");
           }
           echo("</dl></div>");
         }
